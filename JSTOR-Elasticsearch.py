@@ -428,7 +428,7 @@ def generate_actions(dataset_dir, index, document_type):
         txt_files = [p for p in fnames if p.lower().endswith('.txt')]
         
         
-        if len(xml_files)>1:
+        if len(xml_files)>0:
             for xml_file in xml_files:
                 xml_path = os.path.join(dpath, xml_file)
                 
@@ -449,7 +449,7 @@ def generate_actions(dataset_dir, index, document_type):
                 doc_id += 1
                 yield action
                 
-        if len(txt_files) > 1:
+        if len(txt_files) > 0:
             for txt_file in txt_files:
                 txt_path = os.path.join(dpath, txt_file)
                 
