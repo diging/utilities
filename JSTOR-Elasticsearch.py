@@ -406,32 +406,30 @@ def generate_actions(dataset_dir, index, document_type):
     abs_dataset_dir = os.path.abspath(os.path.expanduser(dataset_dir))
     xmlparser = XMLParser()
     txtparser = TXTParser()
-    doc_id = es.count(index, document_type)['count']
+    doc_id = es.count(index=index,doc_type=document_type)['count']
 
     if DEBUG:
         abs_dataset_dir = DEBUG
         import pdb; pdb.set_trace()
 
     for (dpath, dnames, fnames) in os.walk(abs_dataset_dir,topdown = False):
-    
+
         if dnames:
             dnames.sort()
 
         if not fnames:
             continue
-        
+
 
         logger.debug('Processing %s' % dpath)
         document = {}
 
         xml_files = [p for p in fnames if p.lower().endswith('.xml')]
         txt_files = [p for p in fnames if p.lower().endswith('.txt')]
-        
-        
-        if len(xml_files)>0:
+        if len(xml_files) == 1 and len(txt_files) == 1:
             for xml_file in xml_files:
                 xml_path = os.path.join(dpath, xml_file)
-                
+
                 try:
                     document['article'] = xmlparser.parse(os.path.join(dpath, xml_path))
                 except LanguageError, e:
@@ -448,17 +446,15 @@ def generate_actions(dataset_dir, index, document_type):
                 }
                 doc_id += 1
                 yield action
-                
-        if len(txt_files) > 0:
             for txt_file in txt_files:
                 txt_path = os.path.join(dpath, txt_file)
-                
+
                 try:
                     document.update(txtparser.parse(txt_path))
                 except LanguageError, e:
                     logger.error('{}: {}'.format(txt_path, e))
                     continue
-                
+
                 action = {
                     '_index': index,
                     '_type': document_type,
@@ -467,9 +463,30 @@ def generate_actions(dataset_dir, index, document_type):
                 }
                 doc_id += 1
                 yield action
-            
-                
-        
+			
+        elif len(xml_files) > 0:
+            for xml_file in xml_files:
+                xml_path = os.path.join(dpath, xml_file)
+
+                try:
+                    document['article'] = xmlparser.parse(os.path.join(dpath, xml_path))
+                except LanguageError, e:
+                    logger.warning('{}: language \'{}\' not en/eng'.format(xml_path, e))
+                    continue
+                except Exception, e:
+                    logger.error('{}: {}'.format(xml_path, e))
+                    continue
+                action = {
+                    '_index': index,
+                    '_type': document_type,
+                    '_id': doc_id,
+                    '_source': document
+                }
+                doc_id += 1
+                yield action
+
+
+
 # ## Upload to ES
 # 
 # #### Imports
@@ -506,7 +523,6 @@ if ES_CREATE_INDEX:
         mappings = json.load(fh).values()[0]
     es.indices.create(index=ES_INDEX_NAME, body=mappings)
 
-
 # #### Start Upload
 # 
 # Start (bulk) uploading documents to Elasticsearch. Use `chunk_size` parameter to control how many documents are uploaded in one request. By default, at most `500` documents are uploaded per request.  
@@ -514,7 +530,6 @@ if ES_CREATE_INDEX:
 # Depending on the log level, real- logs of processed directories may be displayed.
 
 # In[ ]:
-
 
 action_generator = generate_actions(DATASET_DIR, index=ES_INDEX_NAME, document_type=ES_DOCUMENT_TYPE)
 
@@ -530,4 +545,7 @@ elasticsearch.helpers.bulk(es, action_generator, timeout=ES_TIMEOUT)
 
 
 es.count(index=ES_INDEX_NAME, doc_type=ES_DOCUMENT_TYPE)['count']
+
+
+
 
