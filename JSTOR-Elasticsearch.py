@@ -407,7 +407,48 @@ def generate_actions(dataset_dir, index, document_type):
     xmlparser = XMLParser()
     txtparser = TXTParser()
     doc_id = es.count(index=index,doc_type=document_type)['count']
+    
+    
+    def write_from_xml(xml_file,doc_id):
+        while True:
+            xml_path = os.path.join(abs_dataset_dir, xml_file)
+            try:
+                document['article'] = xmlparser.parse(os.path.join(abs_dataset_dir, xml_path))
+            except LanguageError, e:
+                logger.warning('{}: language \'{}\' not en/eng'.format(xml_path, e))
+                continue
+            except Exception, e:
+                logger.error('{}: {}'.format(xml_path, e))
+                continue
+            action = {
+                '_index': index,
+                '_type': document_type,
+                '_id': doc_id,
+                '_source': document
+            }
+            doc_id += 1
+            return action, doc_id
+            
+        
+    def write_from_txt(txt_file, doc_id):
+        while True:
+            txt_path = os.path.join(abs_dataset_dir, txt_file)
 
+            try:
+                document.update(txtparser.parse(txt_path))
+            except LanguageError, e:
+                logger.error('{}: {}'.format(txt_path, e))
+                continue
+
+            action = {
+                '_index': index,
+                '_type': document_type,
+                '_id': doc_id,
+                '_source': document
+            }
+            doc_id += 1
+            return action, doc_id
+    
     if DEBUG:
         abs_dataset_dir = DEBUG
         import pdb; pdb.set_trace()
@@ -420,71 +461,22 @@ def generate_actions(dataset_dir, index, document_type):
         if not fnames:
             continue
 
-
         logger.debug('Processing %s' % dpath)
         document = {}
 
         xml_files = [p for p in fnames if p.lower().endswith('.xml')]
         txt_files = [p for p in fnames if p.lower().endswith('.txt')]
+        
         if len(xml_files) == 1 and len(txt_files) == 1:
-            for xml_file in xml_files:
-                xml_path = os.path.join(dpath, xml_file)
-
-                try:
-                    document['article'] = xmlparser.parse(os.path.join(dpath, xml_path))
-                except LanguageError, e:
-                    logger.warning('{}: language \'{}\' not en/eng'.format(xml_path, e))
-                    continue
-                except Exception, e:
-                    logger.error('{}: {}'.format(xml_path, e))
-                    continue
-                action = {
-                    '_index': index,
-                    '_type': document_type,
-                    '_id': doc_id,
-                    '_source': document
-                }
-                doc_id += 1
-                yield action
-            for txt_file in txt_files:
-                txt_path = os.path.join(dpath, txt_file)
-
-                try:
-                    document.update(txtparser.parse(txt_path))
-                except LanguageError, e:
-                    logger.error('{}: {}'.format(txt_path, e))
-                    continue
-
-                action = {
-                    '_index': index,
-                    '_type': document_type,
-                    '_id': doc_id,
-                    '_source': document
-                }
-                doc_id += 1
-                yield action
-			
+            action, doc_id = write_from_xml(xml_files[0],doc_id)
+            yield action
+            action, doc_id = write_from_txt(txt_files[0],doc_id)
+            yield action
+                
         elif len(xml_files) > 0:
             for xml_file in xml_files:
-                xml_path = os.path.join(dpath, xml_file)
-
-                try:
-                    document['article'] = xmlparser.parse(os.path.join(dpath, xml_path))
-                except LanguageError, e:
-                    logger.warning('{}: language \'{}\' not en/eng'.format(xml_path, e))
-                    continue
-                except Exception, e:
-                    logger.error('{}: {}'.format(xml_path, e))
-                    continue
-                action = {
-                    '_index': index,
-                    '_type': document_type,
-                    '_id': doc_id,
-                    '_source': document
-                }
-                doc_id += 1
+                action, doc_id = write_from_xml(xml_file,doc_id)
                 yield action
-
 
 
 # ## Upload to ES
@@ -532,7 +524,6 @@ if ES_CREATE_INDEX:
 # In[ ]:
 
 action_generator = generate_actions(DATASET_DIR, index=ES_INDEX_NAME, document_type=ES_DOCUMENT_TYPE)
-
 # elasticsearch.helpers.bulk(es, action_generator, chunk_size=100)
 elasticsearch.helpers.bulk(es, action_generator, timeout=ES_TIMEOUT)
 
