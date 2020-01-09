@@ -410,44 +410,42 @@ def generate_actions(dataset_dir, index, document_type):
     
     
     def write_from_xml(xml_file,doc_id):
-        while True:
-            xml_path = os.path.join(abs_dataset_dir, xml_file)
-            try:
-                document['article'] = xmlparser.parse(os.path.join(abs_dataset_dir, xml_path))
-            except LanguageError, e:
-                logger.warning('{}: language \'{}\' not en/eng'.format(xml_path, e))
-                continue
-            except Exception, e:
-                logger.error('{}: {}'.format(xml_path, e))
-                continue
-            action = {
-                '_index': index,
-                '_type': document_type,
-                '_id': doc_id,
-                '_source': document
-            }
-            doc_id += 1
-            return action, doc_id
+        xml_path = os.path.join(abs_dataset_dir, xml_file)
+        try:
+            document['article'] = xmlparser.parse(os.path.join(abs_dataset_dir, xml_path))
+        except LanguageError, e:
+            logger.warning('{}: language \'{}\' not en/eng'.format(xml_path, e))
+            pass
+        except Exception, e:
+            logger.error('{}: {}'.format(xml_path, e))
+            pass
+            
+        action = {
+            '_index': index,
+            '_type': document_type,
+            '_id': doc_id,
+            '_source': document
+        }
+        doc_id += 1
+        return action, doc_id
             
         
     def write_from_txt(txt_file, doc_id):
-        while True:
-            txt_path = os.path.join(abs_dataset_dir, txt_file)
+        txt_path = os.path.join(abs_dataset_dir, txt_file)
+        try:
+            document.update(txtparser.parse(txt_path))
+        except LanguageError, e:
+            logger.error('{}: {}'.format(txt_path, e))
+            pass
 
-            try:
-                document.update(txtparser.parse(txt_path))
-            except LanguageError, e:
-                logger.error('{}: {}'.format(txt_path, e))
-                continue
-
-            action = {
-                '_index': index,
-                '_type': document_type,
-                '_id': doc_id,
-                '_source': document
-            }
-            doc_id += 1
-            return action, doc_id
+        action = {
+            '_index': index,
+            '_type': document_type,
+            '_id': doc_id,
+            '_source': document
+        }
+        doc_id += 1
+        return action, doc_id
     
     if DEBUG:
         abs_dataset_dir = DEBUG
