@@ -1,6 +1,12 @@
 # Metadata matcher script
 
-This script is used for matching journal articles and metadata. Requires Python 3.6+ and [`pandas`](https://pypi.org/project/pandas/)
+This script is used for matching journal articles and metadata. Requires Python 3.6+.
+
+**Install the dependencies**
+
+```
+pip install -r requirements.txt
+```
 
 ## Configuration
 
