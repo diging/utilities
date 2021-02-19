@@ -104,6 +104,12 @@ class Sheet:
             index=False,
         )
 
+    def get_score_for_article(self, article_index):
+        score = self._parse(self.df.loc[article_index, self.col_config["score"]])
+        if not score:
+            return 0
+        return int(score)
+
     def _validate_cols(self):
         cols = ['title', 'abstract', 'pmid', 'pmcid']
         for col in cols:

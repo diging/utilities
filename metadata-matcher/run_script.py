@@ -1,4 +1,5 @@
 import re
+import chardet
 from math import isnan
 from pathlib import Path
 import shutil
@@ -18,6 +19,7 @@ class Journal:
         self.use_abstract = config["use_abstract"]
         self.files = []  # Will hold files to be matched
         self.config = config
+        self.scoring = config["scoring"]
         self.scanned_files = []  # Files already scanned, retrieved from checkpoint
 
     def search(self):
@@ -81,26 +83,34 @@ class Journal:
                 f"Scanning File ({i + 1}/{len(self.files)}) {text_file}")
             match_found = False
 
+            text_content = self._get_text_content(text_file)
+
             # Enumerate each row in metadata sheet
             for article_meta in self.sheet.articles:
-                cutoff = 70 if self.use_abstract else 50
-                score = self._get_score_for_text(text_file, article_meta)
+                if self.use_abstract:
+                    cutoff = self.scoring["cut_off_with_abstract"]
+                else:
+                    cutoff = self.scoring["cut_off_without_abstract"]
+
+                score = self._get_score_for_text(text_content, article_meta)
                 if score >= cutoff:
-                    logging.info("Found match")
-                    self._found_match(text_file, article_meta, score)
-                    match_found = True
-                    break
+                    existing_score = self.sheet.get_score_for_article(article_meta["index"])
+                    if score > existing_score:
+                        logging.info("Found match")
+                        self._found_match(text_file, article_meta, score)
+                        match_found = True
+                        break
 
             if not match_found:
                 logging.info("No match found")
                 self._copy_file_not_found(text_file)
-
-            try:
-                self._save_metadata()
-            except KeyboardInterrupt:
-                logging.info("Detected program shutdown signal")
-                self._save_metadata()
-                quit()
+            else:
+                try:
+                    self._save_metadata()
+                except KeyboardInterrupt:
+                    logging.info("Detected program shutdown signal")
+                    self._save_metadata()
+                    quit()
 
     def _save_metadata(self):
         logging.info(
@@ -109,46 +119,43 @@ class Journal:
         logging.info(
             f"Successfully saved matched files metadata to '{self.destination_found}'")
 
-    def _get_score_for_text(self, text_file, article_meta):
-        # Match contents of `text_file` and `article_meta`
-        with open(text_file, encoding='utf8') as f:
-            size_to_read = self._get_file_size_to_read(text_file)
-            data = f.read(size_to_read)
-            data_normalized = self._normalize(data)
+    def _get_score_for_text(self, text_content, article_meta):
+        # Match contents of `text_content` and `article_meta`
+        data_normalized = self._normalize(text_content)
 
-            pmid = article_meta["pmid"]
-            pmcid = article_meta["pmcid"]
-            abstract = article_meta["abstract"]
-            title = article_meta["title"]
+        pmid = article_meta["pmid"]
+        pmcid = article_meta["pmcid"]
+        abstract = article_meta["abstract"]
+        title = article_meta["title"]
 
-            # Scoring
-            score = 0
-            if title and self._normalize(title) in data_normalized:
-                score += 30
-            if pmid and pmid in data:
-                score += 5
-            if pmcid and pmcid in data:
-                score += 5
-            if self.use_abstract and abstract and self._normalize(abstract) in data_normalized:
-                score += 40
+        # Scoring
+        score = 0
+        if title and self._normalize(title) in data_normalized:
+            score += self.scoring["title"]
+        if pmid and pmid in text_content:
+            score += self.scoring["pmid"]
+        if pmcid and pmcid in text_content:
+            score += self.scoring["pmcid"]
+        if self.use_abstract and abstract and self._normalize(abstract) in data_normalized:
+            score += self.scoring["abstract"]
 
-            if len(article_meta["authors"]) > 0:
-                # Match all authors
-                author_matches = 0
-                for author in article_meta["authors"]:
-                    first_name = self._normalize(author[0])
-                    last_name = self._normalize(author[1])
+        if len(article_meta["authors"]) > 0:
+            # Match all authors
+            author_matches = 0
+            for author in article_meta["authors"]:
+                first_name = self._normalize(author[0])
+                last_name = self._normalize(author[1])
 
-                    if f"{last_name}{first_name}" in data_normalized:
-                        author_matches += 1
-                    elif f"{first_name}{last_name}" in data_normalized:
-                        author_matches += 1
+                if f"{last_name}{first_name}" in data_normalized:
+                    author_matches += 1
+                elif f"{first_name}{last_name}" in data_normalized:
+                    author_matches += 1
 
-                author_match_percentage = author_matches / \
-                    len(article_meta["authors"])
-                score += 20 * author_match_percentage
+            author_match_percentage = author_matches / \
+                len(article_meta["authors"])
+            score += self.scoring["authors"] * author_match_percentage
 
-            return score
+        return score
 
     def _found_match(self, text_file, article_meta, score):
         with open(text_file, encoding='utf8') as f:
@@ -179,6 +186,27 @@ class Journal:
             return int(size * 2 / 3)
         else:
             return int(size / 3)
+
+    def _get_text_content(self, text_file):
+        with open(text_file, 'rb') as f:
+            size_to_read = self._get_file_size_to_read(text_file)
+            data = f.read(size_to_read)
+            encoding, confidence = self._get_text_encoding(data)
+            if confidence > 0.7:
+                try:
+                    data = str(data, encoding=encoding)
+                    return data
+                except UnicodeDecodeError:
+                    encoding = self.config["text_files_default_encoding"]
+            else:
+                encoding = self.config["text_files_default_encoding"]
+            
+            data = str(data, encoding=encoding)
+            return data
+
+    def _get_text_encoding(self, raw_data):
+        result = chardet.detect(raw_data)
+        return result['encoding'], result['confidence']
 
     def _normalize(self, text):
         """
