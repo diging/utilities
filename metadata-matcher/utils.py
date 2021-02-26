@@ -108,7 +108,10 @@ class Sheet:
         score = self._parse(self.df.loc[article_index, self.col_config["score"]])
         if not score:
             return 0
-        return int(score)
+        return int(float(score)) # To convert "60.0" (str) to 60 (int)
+
+    def get_text_file_for_article(self, article_index):
+        return self.df.loc[article_index, self.col_config["text_file"]]
 
     def _validate_cols(self):
         cols = ['title', 'abstract', 'pmid', 'pmcid']

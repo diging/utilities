@@ -97,6 +97,14 @@ class MetadataEntries:
                     existing_score = self.sheet.get_score_for_article(article_meta["index"])
                     if score > existing_score:
                         logging.info("Found match")
+                        if existing_score > 0:
+                            # Add existing text file back to `self.files`
+                            existing_text_file = self.sheet.get_text_file_for_article(
+                                article_meta["index"])
+                            logging.info(f"Overriding matched file '{existing_text_file}' with '{text_file}'")
+                            self.files.append(existing_text_file)
+                            logging.info(f"Added '{existing_text_file}' back to scanning")
+
                         self._found_match(text_file, article_meta, score)
                         match_found = True
                         break
