@@ -8,7 +8,7 @@ import logging
 from utils import Sheet
 
 
-class Journal:
+class MetadataEntries:
     def __init__(self, config):
         self.parent_dir = Path(config["parent_dir"])
         self.metadata = self.parent_dir / config["metadata"]
@@ -22,7 +22,7 @@ class Journal:
         self.scoring = config["scoring"]
         self.scanned_files = []  # Files already scanned, retrieved from checkpoint
 
-    def search(self):
+    def match(self):
         self._scan_metadata()
         self._scan_folder()
         self._perform_match()
@@ -223,5 +223,5 @@ if __name__ == "__main__":
         datefmt=config["log_date_format"],
         level=config["log_level"]
     )
-    journal = Journal(config=config)
-    journal.search()
+    metadata_entries = MetadataEntries(config=config)
+    metadata_entries.match()

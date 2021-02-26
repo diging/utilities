@@ -12,11 +12,11 @@ pip install -r requirements.txt
 
 Set the following configurations in `config.py`
 
-* `DIRECTORY` - Path to the parent folder containing all relevant files.
-* `METADATA_FILE` - Path to article metadata file: supports `.xlsx` and `.csv` files.
-* `TEXT_FILES_FOLDER` - Folder containing all the raw journal article text files. Supports nested folder structure.
-* `NOT_FOUND_FOLDER` - Path to an empty folder. All the unmatched raw text files will be copied here.
-* `FOUND_METADATA` - Path to the target metadata file: supports `.csv`. This is a copy of `METADATA_FILE`, prepended with 3 columns: **raw text** of the matched file, **path** of the matched file, and **matching score**.
+* `DIRECTORY` - Path to the parent folder containing all relevant files. Accepts both relative (to where the script is run from), and absolute path.
+* `METADATA_FILE` - Path to article metadata file: supports `.xlsx` and `.csv` files (Relative to `DIRECTORY`).
+* `TEXT_FILES_FOLDER` - Folder containing all the raw journal article text files. Supports nested folder structure (Relative to `DIRECTORY`).
+* `NOT_FOUND_FOLDER` - Path to an empty folder. All the unmatched raw text files will be copied here (Relative to `DIRECTORY`).
+* `FOUND_METADATA` - Path to the target metadata file: supports `.csv`. This is a copy of `METADATA_FILE`, prepended with 3 columns: **raw text** of the matched file, **path** of the matched file, and **matching score** (Relative to `DIRECTORY`).
 * Set the `FLAG_USE_ABSTRACT = True` for including the ***abstract*** column in the matching process.
 
 ### Matching authors
@@ -47,6 +47,7 @@ python run_script.py
     * **Note**: If you interrupt the program while `FOUND_METADATA` file is being saved, the program will still finish saving and quit automatically (unless you forcefully try to stop it again).
 * If `FOUND_METADATA` file already exists, the script will exclude the files already matched! This can be used as a ***checkpoint*** feature.
 * You can run `python run_script.py` again to restart the program from the checkpoint.
+* For restarting the process from the beginning, either delete the `FOUND_METADATA` file, or provide a different name for `FOUND_METADATA`. 
 
 ## Scoring
 
