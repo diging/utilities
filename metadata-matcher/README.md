@@ -12,7 +12,7 @@ pip install -r requirements.txt
 
 Set the following configurations in `config.py`
 
-* `DIRECTORY` - Path to the parent folder containing metadata files and plain text files. Accepts both relative (to where the script is run from), and absolute path.
+* `DIRECTORY` - Path to the parent folder containing metadata file and plain text files. Accepts both relative (to where the script is run from), and absolute path.
 * `METADATA_FILE` - Path to article metadata file: supports `.xlsx` and `.csv` files (Relative to `DIRECTORY`).
 * `TEXT_FILES_FOLDER` - Folder containing all the raw journal article text files. Supports nested folder structure (Relative to `DIRECTORY`).
 * `NOT_FOUND_FOLDER` - Path to an empty folder. All the unmatched raw text files will be copied here (Relative to `DIRECTORY`).
