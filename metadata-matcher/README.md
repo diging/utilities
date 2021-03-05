@@ -1,6 +1,6 @@
 # Metadata matcher script
 
-This script is used for matching journal articles and metadata. Requires Python 3.6+.
+This script matches metadata entries of articles in a `CSV/XLSX` file, with plain text files containing the content of the articles listed in the metadata file. It does so by comparing certain columns from metadata such as `title` and `authors` (configurable) with the plain text. Each column match is assigned with a score, and if the total score exceeds a cutoff score, it is considerd a match. Requires Python 3.6+.
 
 **Install the dependencies**
 
@@ -12,7 +12,7 @@ pip install -r requirements.txt
 
 Set the following configurations in `config.py`
 
-* `DIRECTORY` - Path to the parent folder containing all relevant files. Accepts both relative (to where the script is run from), and absolute path.
+* `DIRECTORY` - Path to the parent folder containing metadata files and plain text files. Accepts both relative (to where the script is run from), and absolute path.
 * `METADATA_FILE` - Path to article metadata file: supports `.xlsx` and `.csv` files (Relative to `DIRECTORY`).
 * `TEXT_FILES_FOLDER` - Folder containing all the raw journal article text files. Supports nested folder structure (Relative to `DIRECTORY`).
 * `NOT_FOUND_FOLDER` - Path to an empty folder. All the unmatched raw text files will be copied here (Relative to `DIRECTORY`).
