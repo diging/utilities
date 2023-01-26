@@ -3,12 +3,12 @@ from openpyxl.styles import colors
 from openpyxl.styles import Font, Color, PatternFill, Alignment, Border, Side
 from datetime import time, datetime, date, timedelta
 from openpyxl.utils import get_column_letter
-from schedule_utils import handle_lunch, format_cell
+from schedule_utils import handle_lunch, format_cell, set_border
 
 
 
 def main():
-    hours_wb = load_workbook(filename = 'hours2.xlsx')
+    hours_wb = load_workbook(filename = '2023_Spring_Semester_Schedule1.xlsx')
     hours_sheet = hours_wb['Sheet1']
 
     # declare styles here for easy modification
@@ -22,18 +22,17 @@ def main():
     new_sheet = new_wb.active
     hours_col_a = hours_sheet['A']
 
-    new_sheet['A1'] = 'Diging Schedule'
+    new_sheet['A1'] = 'DigInG Schedule'
     new_sheet['A1'].font = header
 
-    new_sheet.column_dimensions["A"].width = 24
-    new_sheet.column_dimensions["B"].width = 8
+    new_sheet.column_dimensions["A"].width = 13
 
-    for x in range(3, 35):
-        new_sheet.column_dimensions[get_column_letter(x)].width = 4
+    for x in range(2, 20):
+        new_sheet.column_dimensions[get_column_letter(x)].width = 8
 
     row_number = 3
 
-    days_of_weeks_strings = ['Monday', 'Tuesady', 'Wednesday', 'Thursday', 'Friday']
+    days_of_weeks_strings = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
 
     background_colors = ["FFBA84", '90B44B', '7DB9DE', '787D7B', '005CAF', 'EFBB24', '994639', '1B813E', '52433D', '81C7D4', '8E354A', '554236', 'F7D94C', '646A58', '7B90D2']
 
@@ -42,15 +41,15 @@ def main():
     for day in days_of_weeks_strings:
         new_sheet.cell(row=row_number, column=1, value=day).font = days
         count = 0
-        start_column = 3
-        end_column = start_column + 3
-        time_list = ['9:00', '10:00', '11:00', '12:00', '1:00', '2:00', '3:00', '4:00', '5:00']
-        while count < 8:
+        start_column = 2
+        end_column = start_column + 1
+        time_list = ['8:00', '9:00', '10:00', '11:00', '12:00', '1:00', '2:00', '3:00', '4:00']
+        while count < 9:
             new_sheet.cell(row=row_number, column=start_column, value=time_list[count]).alignment = cell_aligment
             new_sheet.cell(row=row_number, column=start_column, value=time_list[count]).border = time_borders
             new_sheet.merge_cells(start_row=row_number, start_column=start_column, end_row=row_number, end_column=end_column)
             start_column = end_column + 1
-            end_column = start_column + 3
+            end_column = start_column + 1
             count += 1
         row_number += 1
         for index, name in enumerate(hours_col_a):
@@ -63,6 +62,17 @@ def main():
                 row_number += 1
         row_number += 1
     total_scheduled_hours = {}
+
+    num_workers = len(worker_map) - 1
+    col_start = 2
+    col_end = 19
+    row_start = 3
+    row_end = row_start + num_workers
+    for day in days_of_weeks_strings:
+        set_border(new_sheet, f'{new_sheet.cell(row_start, col_start).coordinate}:{new_sheet.cell(row_end, col_end).coordinate}', background_colors)
+        row_start += num_workers + 7
+        row_end += num_workers + 7
+
     for index, row in enumerate(hours_sheet.iter_rows()):
         # check if there is a name, if not consider it the end of the list
         if not row[0].value:
@@ -88,12 +98,12 @@ def main():
                     start_string_2 = row[start + 2].value
                     end_string_2 = row[end + 2].value
                     print(f"start 2: {start_string_2}, end 2: {end_string_2}")
-                    start_column = 3 + ((start_string.hour - 9)*4) + (start_string.minute / 15)
+                    start_column = 2 + ((start_string.hour - 8)*2) + (start_string.minute / 30)
                     print(f"Start Column: {start_column}")
                     duration = datetime.combine(date.min, end_string) - datetime.combine(date.min, start_string)
                     total_scheduled_hours[name] += duration
                     print('Duration: {}'.format(duration ))
-                    total_cells = duration.seconds / 60 / 15
+                    total_cells = duration.seconds / 60 / 30
                     temp_scheduled_minutes = scheduled_minutes
                     temp_scheduled_minutes += duration.seconds / 60
                     if temp_scheduled_minutes > max_avail_minutes:
@@ -115,13 +125,13 @@ def main():
                         duration_2 = datetime.combine(date.min, end_string_2) - datetime.combine(date.min, start_string_2)
                         break_duration = datetime.combine(date.min, start_string_2) - datetime.combine(date.min, end_string)
                         print(f"break duration: {break_duration}")
-                        break_quarter_increments = divmod((break_duration.total_seconds()/60), 15)
-                        duration_2_quarter_increments = divmod((duration_2.total_seconds()/60), 15)
+                        break_quarter_increments = divmod((break_duration.total_seconds()/60), 30)
+                        duration_2_quarter_increments = divmod((duration_2.total_seconds()/60), 30)
                         print(f"duration increments: {duration_2_quarter_increments}")
 
                         total_scheduled_hours[name] += duration_2
                         print('duration_2: {}'.format(duration_2 ))
-                        total_cells = duration_2.seconds / 60 / 15
+                        total_cells = duration_2.seconds / 60 / 30
                         temp_scheduled_minutes = scheduled_minutes
                         temp_scheduled_minutes += duration_2.seconds / 60
                         if temp_scheduled_minutes > max_avail_minutes:
