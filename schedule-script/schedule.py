@@ -34,7 +34,7 @@ def main():
 
     days_of_weeks_strings = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
 
-    background_colors = ["FFBA84", '90B44B', '7DB9DE', '787D7B', '005CAF', 'EFBB24', '994639', '1B813E', '52433D', '81C7D4', '8E354A', '554236', 'F7D94C', '646A58', '7B90D2']
+    background_colors = ["FFBA84", '90B44B', '7DB9DE', '787D7B', '005CAF', 'EFBB24', '994639', '1B813E', '52433D', '81C7D4', '8E354A', 'FFC0CB', 'F7D94C', '646A58', '7B90D2']
 
     worker_map = {}
 
@@ -70,8 +70,8 @@ def main():
     row_end = row_start + num_workers
     for day in days_of_weeks_strings:
         set_border(new_sheet, f'{new_sheet.cell(row_start, col_start).coordinate}:{new_sheet.cell(row_end, col_end).coordinate}', background_colors)
-        row_start += num_workers + 7
-        row_end += num_workers + 7
+        row_start += num_workers + 6
+        row_end += num_workers + 6
 
     for index, row in enumerate(hours_sheet.iter_rows()):
         # check if there is a name, if not consider it the end of the list

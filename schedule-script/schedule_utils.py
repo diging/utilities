@@ -30,5 +30,5 @@ def set_border(new_sheet, cell_range, background_colors):
         row[-1].border = Border(right=thick, bottom=thin, top=thin)
     new_sheet[cell_range][0][0].border = Border(left=thick, top=thick)
     new_sheet[cell_range][0][-1].border = Border(right=thick, top=thick)
-    new_sheet[cell_range][-1][0].border = Border(left=Side(border_style="thick", color=background_colors[11]), bottom=thick)
+    new_sheet[cell_range][-1][0].border = Border(left=Side(border_style="thick", color=background_colors[12]), bottom=thick)
     new_sheet[cell_range][-1][-1].border = Border(right=thick, bottom=thick)
